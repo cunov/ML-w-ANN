@@ -53,6 +53,46 @@ def collapse_data(data):
     return collapsed_data_north, collapsed_data_south
 
 
+def divide_data(data, frac_train, frac_val, frac_test):
+    num_samples = data.shape[0]
+
+    tot_frac = frac_train + frac_val + frac_test
+    splt_point_1 = int(frac_train/tot_frac*num_samples)
+    splt_point_2 = int((frac_train+frac_val)/tot_frac*num_samples)
+
+    train_data = data[:splt_point_1]
+    val_data = data[splt_point_1:splt_point_2]
+    test_data = data[splt_point_2:]
+
+    return train_data, val_data, test_data
+
+
+def split_data(data, input_sequence_length, output_sequence_length, num_samples_to_be_drawn, features=[0, 1, 2, 3]):
+    num_samples = data.shape[0]
+    num_sensors = data.shape[1]
+    num_features = len(features)
+
+    num_possible_splits = num_samples - (input_sequence_length+output_sequence_length-1)
+
+    if num_possible_splits < num_samples_to_be_drawn:
+        print('To many requested samples: {}, must be less than total possible number: {}'.format(num_samples_to_be_drawn, num_possible_splits))
+        return
+
+    split_data_input = np.zeros([num_samples_to_be_drawn, input_sequence_length, num_sensors, num_features], dtype='e')
+    split_data_output = np.zeros([num_samples_to_be_drawn, output_sequence_length, num_sensors, num_features], dtype='e')
+
+    chosen = np.random.choice(np.arange(num_possible_splits), size=num_samples_to_be_drawn, replace=False)
+
+    for indx, i in enumerate(chosen):
+        split_data_input[indx] = data[i:(i+input_sequence_length), :, features]
+        split_data_output[indx] = data[(i+input_sequence_length):(i+input_sequence_length+output_sequence_length), :, features]
+
+    split_data_input = np.squeeze(split_data_input)
+    split_data_output = np.squeeze(split_data_output)
+
+    return split_data_input, split_data_output
+
+
 def check_for_no_connections(dist_mat):
 
     for d in range(2):
@@ -60,3 +100,5 @@ def check_for_no_connections(dist_mat):
         for sensor in range(num_sensors):
             if len(np.where(dist_mat[d][sensor, :]!=0)[0]) == 0:
                 print(sensor)
+
+
