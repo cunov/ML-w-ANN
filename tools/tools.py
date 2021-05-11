@@ -4,7 +4,7 @@ import numpy as np
 def invert_numeric_dict_to_list(d):
     l = [None] * len(d)
     for key in d:
-       l[d[key]] = key
+        l[d[key]] = key
 
     return l
 
@@ -14,7 +14,6 @@ def key_by_val(dict, val):
 
 
 def remove_items_from_numeric_dict(dict, items):
-
     remove_keys = [key_by_val(dict, x) for x in items]
     for r_key in remove_keys:
         for key in dict:
@@ -57,8 +56,8 @@ def divide_data(data, frac_train, frac_val, frac_test):
     num_samples = data.shape[0]
 
     tot_frac = frac_train + frac_val + frac_test
-    splt_point_1 = int(frac_train/tot_frac*num_samples)
-    splt_point_2 = int((frac_train+frac_val)/tot_frac*num_samples)
+    splt_point_1 = int(frac_train / tot_frac * num_samples)
+    splt_point_2 = int((frac_train + frac_val) / tot_frac * num_samples)
 
     train_data = data[:splt_point_1]
     val_data = data[splt_point_1:splt_point_2]
@@ -72,20 +71,24 @@ def split_data(data, input_sequence_length, output_sequence_length, num_samples_
     num_sensors = data.shape[1]
     num_features = len(features)
 
-    num_possible_splits = num_samples - (input_sequence_length+output_sequence_length-1)
+    num_possible_splits = num_samples - (input_sequence_length + output_sequence_length - 1)
 
     if num_possible_splits < num_samples_to_be_drawn:
-        print('To many requested samples: {}, must be less than total possible number: {}'.format(num_samples_to_be_drawn, num_possible_splits))
+        print(
+            'To many requested samples: {}, must be less than total possible number: {}'.format(num_samples_to_be_drawn,
+                                                                                                num_possible_splits))
         return
 
     split_data_input = np.zeros([num_samples_to_be_drawn, input_sequence_length, num_sensors, num_features], dtype='e')
-    split_data_output = np.zeros([num_samples_to_be_drawn, output_sequence_length, num_sensors, num_features], dtype='e')
+    split_data_output = np.zeros([num_samples_to_be_drawn, output_sequence_length, num_sensors, num_features],
+                                 dtype='e')
 
     chosen = np.random.choice(np.arange(num_possible_splits), size=num_samples_to_be_drawn, replace=False)
 
     for indx, i in enumerate(chosen):
-        split_data_input[indx] = data[i:(i+input_sequence_length), :, features]
-        split_data_output[indx] = data[(i+input_sequence_length):(i+input_sequence_length+output_sequence_length), :, features]
+        split_data_input[indx] = data[i:(i + input_sequence_length), :, features]
+        split_data_output[indx] = data[(i + input_sequence_length):(i + input_sequence_length + output_sequence_length),
+                                  :, features]
 
     split_data_input = np.squeeze(split_data_input)
     split_data_output = np.squeeze(split_data_output)
@@ -93,12 +96,20 @@ def split_data(data, input_sequence_length, output_sequence_length, num_samples_
     return split_data_input, split_data_output
 
 
-def check_for_no_connections(dist_mat):
+def non_overlapping_moving_window_average(array, window_size):
+    """
+    Performs a non overlapping moving window average
+    :param array: 1D data vector
+    :param window_size: the number of points to be averaged for each new data point
+    :return: 1D array of size largest_divisor
+    """
+    largest_divisor = int(len(array) / window_size) * window_size
+    return array[:largest_divisor].reshape(-1, window_size).mean(1)
 
+
+def check_for_no_connections(dist_mat):
     for d in range(2):
         num_sensors = dist_mat[d].shape[0]
         for sensor in range(num_sensors):
-            if len(np.where(dist_mat[d][sensor, :]!=0)[0]) == 0:
+            if len(np.where(dist_mat[d][sensor, :] != 0)[0]) == 0:
                 print(sensor)
-
-

@@ -2,7 +2,7 @@ import os
 import pickle
 import xml.etree.ElementTree as ET
 import numpy as np
-from tools.tools import key_by_val, invert_numeric_dict_to_list, num_lines, collapse_data, remove_items_from_numeric_dict
+from tools.tools import divide_data, split_data, num_lines, collapse_data, remove_items_from_numeric_dict
 
 
 def read_log_dir(log_dir, save_file):
@@ -229,9 +229,11 @@ def remove_constant_sensors(save_file):
 
 
 if __name__ == '__main__':
-    read_log_dir('data_prep/i35_5min_bluetoothtraveltimes_2019', 'i35_2019')
-    parse_data('data_prep/i35_2019')
-    remove_constant_sensors('data_prep/i35_2019')
+    #read_log_dir('data_prep/i35_5min_bluetoothtraveltimes_2019', 'i35_2019')
+    #parse_data('data_prep/i35_2019')
+    #remove_constant_sensors('data_prep/i35_2019')
     data, distance_matrix, sensor_enums, time_enums, direction_enums = load_data('data_prep/i35_2019')
+    x=21
+
 
 

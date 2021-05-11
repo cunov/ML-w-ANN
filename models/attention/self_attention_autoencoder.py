@@ -173,3 +173,4 @@ def create_model(seq_len, d_k, d_v, n_heads, ff_dim, filt_dim, latent_dim):
   model.compile(loss='mse', optimizer='adam', metrics=['mae', 'mape'])
   return model
 
+
