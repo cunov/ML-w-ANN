@@ -204,7 +204,6 @@ def remove_constant_sensors(save_file):
 
     # Remove all constant data
     if len(removed_indices[0]) != 0:
-        distance_matrix_new = [None]*2
         data_new = [None]*2
         for d in range(2):
             num_sensors = len(data[d])-len(removed_indices[d])
@@ -212,7 +211,7 @@ def remove_constant_sensors(save_file):
             data_new[d] = np.zeros([num_sensors, 365, 288, 4])
             data_new[d] = np.delete(data[d], removed_indices[d], axis=0)
 
-            sensor_enums_new[d] = remove_items_from_numeric_dict(sensor_enums_new[d], removed_indices[d])
+            sensor_enums_new[d] = remove_items_from_numeric_dict(sensor_enums_new[d].copy(), removed_indices[d])
 
         data = data_new
         sensor_enums = sensor_enums_new
@@ -231,9 +230,8 @@ def remove_constant_sensors(save_file):
 if __name__ == '__main__':
     #read_log_dir('data_prep/i35_5min_bluetoothtraveltimes_2019', 'i35_2019')
     #parse_data('data_prep/i35_2019')
-    #remove_constant_sensors('data_prep/i35_2019')
+    remove_constant_sensors('data_prep/i35_2019')
     data, distance_matrix, sensor_enums, time_enums, direction_enums = load_data('data_prep/i35_2019')
-    x=21
 
 
 

@@ -6,7 +6,7 @@ import scipy.stats as stats
 from tools.tools import key_by_val, invert_numeric_dict_to_list, collapse_data
 
 
-def plot_grid(distance_matrix, sensor_enums):
+def plot_grid(distance_matrix, sensor_enums, constant):
 
     labels_north = invert_numeric_dict_to_list(sensor_enums[0])
     labels_south = invert_numeric_dict_to_list(sensor_enums[1])
@@ -30,13 +30,27 @@ def plot_grid(distance_matrix, sensor_enums):
         # Shift the x values of every node by 10 to the right
         v[0] = v[0] + 0.5
 
-    nx.draw_networkx_nodes(G1, pos=pos1, node_size=30, node_color='b')
-    nx.draw_networkx_edges(G1, pos1, edgelist=elarge1, width=1, style='solid')
-    nx.draw_networkx_labels(G1, pos1, labels_north_dict, font_size=5)
+    color_map_1 = []
+    for i in constant[0]:
+        if i == 0:
+            color_map_1.append('blue')
+        else:
+            color_map_1.append('red')
 
-    nx.draw_networkx_nodes(G2, pos=pos2, node_size=50)
+    color_map_2 = []
+    for i in constant[1]:
+        if i == 0:
+            color_map_2.append('blue')
+        else:
+            color_map_2.append('red')
+
+    nx.draw_networkx_nodes(G1, node_color=color_map_1, pos=pos1, node_size=30)
+    nx.draw_networkx_edges(G1, pos1, edgelist=elarge1, width=1, style='solid')
+    nx.draw_networkx_labels(G1, pos1, labels_north_dict, font_size=8)
+
+    nx.draw_networkx_nodes(G2,  node_color=color_map_2, pos=pos2, node_size=50)
     nx.draw_networkx_edges(G2, pos2, edgelist=elarge2, width=1)
-    nx.draw_networkx_labels(G2, pos2, labels_south_dict, font_size=5)
+    nx.draw_networkx_labels(G2, pos2, labels_south_dict, font_size=8)
 
     plt.show()  # display
     plt.draw()
@@ -51,8 +65,11 @@ def check_dist_mat(distance_matrix, sensor_enums):
             num_connections = len(row[row!=0])
             if num_connections == 0:
                 print('Unconnected node: {}'.format(key_by_val(sensor_enums[dir], i)))
+            elif num_connections == 1:
+                print('End node: {}, dir: {}'.format(key_by_val(sensor_enums[dir], i), dir))
+                connected_nodes += 1
             else:
-                connected_nodes +=1
+                connected_nodes += 1
 
 
     fig, ax = plt.subplots(1, 2)
@@ -103,15 +120,19 @@ def plot_sensor_distributions(data, sensor_enums, time_enums, direction_enums):
     avg[0] = np.average(collapsed_data_north, axis=0)
     avg[1] = np.average(collapsed_data_south, axis=0)
 
+    constant = [None, None]
+
     fig, ax = plt.subplots(1, 2)
     for dir in range(2):
         sensors = len(sensor_enums[dir])
+        constant[dir] = np.zeros(sensors)
         for i in range(sensors):
             mean = avg[dir][i, 1]
             std = avg[dir][i, 3]
 
             if std == 0 or std == -1:
                 print('The sensor {}, has constant values in the {} direction'.format(key_by_val(sensor_enums[dir], i), key_by_val(direction_enums, dir)))
+                constant[dir][i] = 1
                 continue
 
             x = np.linspace(mean-4*std, mean+4*std, 100)
@@ -121,11 +142,13 @@ def plot_sensor_distributions(data, sensor_enums, time_enums, direction_enums):
             ax[dir].set_ylim([0, 1])
 
     plt.show()
+    return constant
 
 
 if __name__ == '__main__':
     data, distance_matrix, sensor_enums, time_enums, direction_enums = prep.load_data('data_prep/i35_2019')
+    constant = plot_sensor_distributions(data, sensor_enums, time_enums, direction_enums)
     check_dist_mat(distance_matrix, sensor_enums)
-    plot_grid(distance_matrix, sensor_enums)
+    plot_grid(distance_matrix, sensor_enums, constant)
     plot_single_sensor_evolution(data, sensor_enums, time_enums, direction_enums, 0)
-    plot_sensor_distributions(data, sensor_enums, time_enums, direction_enums)
+
