@@ -2,6 +2,8 @@ import os
 import zipfile
 import numpy as np
 import torch
+import matplotlib.pyplot as plt
+import matplotlib
 from data_prep.prep import load_data, collapse_data
 
 
@@ -24,7 +26,7 @@ def load_metr_la_data():
     return A, X, means, stds
 
 
-def load_I_35_data(direction=0, features=[1 ,2]):
+def load_I_35_data(direction=0, features=[1 ,2], extra_feature='none'):
     X, A, sensor_enums, time_enums, direction_enums = load_data('data_prep/i35_2019')
 
     X[0], X[1] = collapse_data(X)
@@ -35,15 +37,25 @@ def load_I_35_data(direction=0, features=[1 ,2]):
     X = np.moveaxis(X, 0, 2)
     X = X[:, features, :]  # Select features
 
-    # Add periodic feature to help periodic learning (compare with time_2_vec)
-    periodic = np.zeros([X.shape[0], 1, X.shape[2]])
-    triangle = np.linspace(0, 1, 288)
-    triangle = np.tile(triangle, int(X.shape[2]/288)+1)
-    periodic[:, 0, :] = triangle[:X.shape[2]]
+    if extra_feature != 'none':
+        # Add periodic feature to help periodic learning (compare with time_2_vec)
+        periodic = np.zeros([X.shape[0], 1, X.shape[2]])
+        triangle = np.linspace(0, 1, 288)
+        triangle = np.tile(triangle, int(X.shape[2] / 288) + 1)
 
-    X = np.concatenate((X, periodic), axis=1)
+        if extra_feature == 'triangle':
+            periodic[:, 0, :] = triangle[:X.shape[2]]
+        elif extra_feature == 'sin':
+            sin = np.sin(triangle * (2 * np.pi)-np.pi/2) / 2 + 0.5
+            periodic[:, 0, :] = sin[:X.shape[2]]
+            periodic_tri = periodic.copy()
+            periodic_tri[:, 0, :] = triangle[:X.shape[2]]
+
+        X = np.concatenate((X, periodic), axis=1)
 
     A += np.eye(A.shape[0])  # Add diagonal to allow graph conv
+
+    X[X==-1] = 0 # Remove -1 from data
 
     means = np.mean(X, axis=(0, 2))
     X = X - means.reshape(1, -1, 1)
@@ -52,6 +64,70 @@ def load_I_35_data(direction=0, features=[1 ,2]):
 
     X = X.astype(np.float32)
     A = A.astype(np.float32)
+
+    # plot
+    if False:
+        color = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
+                 '#17becf']
+        fig = matplotlib.pyplot.gcf()
+        fig.set_size_inches(20, 5)
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.size"] = 20
+        plt.rcParams['savefig.dpi'] = 500
+
+        plt.plot(X[10, 0, 0:288*7], color=color[0])
+        plt.text(-300, np.average(X[10, 0, 0:288*7]), 'Speed')
+
+        plt.plot(X[10, 1, 0:288 * 7]+4, color=color[1])
+        plt.text(-300, np.average(X[10, 1, 0:288 * 7]+4), 'Volume')
+
+        plt.plot(periodic_tri[10, 0, 0:288 * 7] + 8, color=color[2])
+        plt.text(-300, np.average(periodic_tri[10, 0, 0:288 * 7])+8, 'Triangle')
+
+        plt.plot(X[10, 2, 0:288 * 7]+12, color=color[3])
+        plt.text(-300, np.average(X[10, 2, 0:288 * 7])+12, 'Sine')
+
+        plt.xlim(-350, 288 * 7)
+        plt.yticks([])
+        ticks = np.arange(0, 288*7)
+        times = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        freq = 288
+        plt.xticks(ticks[::freq]+int(288/2), times)
+        plt.xticks(rotation=45)
+        plt.show()
+
+    # Zoom in
+    if False:
+        color = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
+                 '#17becf']
+        fig = matplotlib.pyplot.gcf()
+        fig.set_size_inches(20, 5)
+        plt.rcParams["font.family"] = "Times New Roman"
+        plt.rcParams["font.size"] = 20
+        plt.rcParams['savefig.dpi'] = 500
+        plt.rcParams['xtick.bottom'] = plt.rcParams['xtick.labelbottom'] = False
+        plt.rcParams['xtick.top'] = plt.rcParams['xtick.labeltop'] = True
+
+        plt.plot(X[10, 0, 0:int(288/2)], '.', color=color[0])
+        #plt.text(-300, np.average(X[10, 0, 0:288/2]), 'Speed')
+
+        plt.plot(X[10, 1, 0:int(288/2)]+4,'.', color=color[1])
+        #plt.text(-300, np.average(X[10, 1, 0:288/2]+4), 'Volume')
+
+        plt.plot(periodic_tri[10, 0, 0:int(288/2)] + 8,'.', color=color[2])
+        #plt.text(-300, np.average(periodic_tri[10, 0, 0:288/2])+8, 'Triangle')
+
+        plt.plot(X[10, 2, 0:int(288/2)]+12,'.', color=color[3])
+        #plt.text(-300, np.average(X[10, 2, 0:288/2])+12, 'Sine')
+
+        plt.xlim(0, int(288/2))
+        plt.yticks([])
+        ticks = np.arange(0, int(288/2))
+        times = ['24:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00']
+        freq = 12
+        plt.xticks(ticks[::freq], times)
+        plt.xticks(rotation=45)
+        plt.show()
 
     return A, X, means, stds
 

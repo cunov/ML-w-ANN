@@ -34,6 +34,7 @@ class TimeBlock(nn.Module):
         X = X.permute(0, 3, 1, 2)
         temp = self.conv1(X) + torch.sigmoid(self.conv2(X))
         out = F.relu(temp + self.conv3(X))
+        #out = F.relu(temp)
         # Convert back from NCHW to NHWC
         out = out.permute(0, 2, 3, 1)
         return out
